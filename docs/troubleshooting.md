@@ -1,25 +1,25 @@
 # Troubleshooting Guide
 
-## 🚨 Critical Known Issues
+## ✅ Resolved Issues
 
-### MCP Core Bug (Current Major Issue)
+### MCP Core Bug (RESOLVED)
 
-**Problem**: `tools/list` and `tools/call` fail with "Client must be initialized" error despite successful MCP handshake.
+**Problem**: `tools/list` and `tools/call` failed with "Client must be initialized" error despite successful MCP handshake.
 
-**Symptoms**:
+**Symptoms** (Historical):
 - ✅ SSE connection establishes successfully
 - ✅ MCP initialize handshake completes
 - ✅ MCP initialized notification accepted
-- ❌ `tools/list` returns "Client must be initialized before using tools/list"
-- ❌ `tools/call` returns "Client must be initialized before using tools/call"
+- ❌ `tools/list` returned "Client must be initialized before using tools/list"
+- ❌ `tools/call` returned "Client must be initialized before using tools/call"
 
 **Root Cause**: Bug in `mcp-core` crate v0.1 - server doesn't track client initialization state properly.
 
-**Status**: 🔄 Custom protocol workaround in development
+**Status**: ✅ **RESOLVED** with custom protocol implementation (v0.5.0+)
 
-**Workaround**: Use custom protocol implementation (available in v0.5.0+)
+**Solution**: Dual-server architecture with HTTP REST API bypassing MCP tools/call entirely
 
-**Test Script**: Run `nodejs/test-direct-tools.js` to verify the issue
+**Current Status**: All debugging tools fully functional via HTTP API on port 8082
 
 ---
 
