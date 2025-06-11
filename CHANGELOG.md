@@ -5,6 +5,43 @@ All notable changes to the MCP Server GDB for STM32 project will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2025-06-11 (In Development)
+
+> **🚨 CRITICAL BUG DISCOVERY & WORKAROUND**: Custom protocol implementation to bypass mcp-core v0.1 bug
+
+### Critical Bug Discovered
+- **Issue**: `mcp-core` crate version 0.1 has a critical bug in client initialization state tracking
+- **Impact**: Both `tools/list` and `tools/call` fail with "Client must be initialized" error despite successful MCP handshake
+- **Root Cause**: Server doesn't properly track client initialization state after successful initialize/initialized sequence
+- **Evidence**: SSE connection works, MCP handshake succeeds, but tool access is blocked
+
+### Workaround Implementation (In Progress)
+- **Strategy**: Custom SSE-based protocol bypassing standard MCP tools/call mechanism
+- **Architecture**: Direct tool invocation using existing SSE connection infrastructure
+- **Development**: Distributed across 5 parallel agent branches for rapid implementation
+
+### Agent Development Branches
+- **Agent-1** (`feature/rust-custom-protocol`): Custom Rust protocol implementation
+- **Agent-2** (`feature/nodejs-custom-client`): Node.js client integration
+- **Agent-3** (`feature/comprehensive-testing`): Testing & validation framework
+- **Agent-4** (`feature/documentation-update`): Comprehensive documentation updates
+- **Agent-5** (`feature/devops-pipeline`): Enhanced CI/CD pipeline
+
+### Expected Deliverables
+- Custom protocol handler bypassing mcp-core bug
+- Updated Node.js client with custom protocol support
+- Comprehensive test suite validating workaround
+- Complete documentation for custom protocol
+- Enhanced deployment pipeline
+
+### Benefits of Workaround
+- **Reliability**: Eliminates dependency on buggy mcp-core initialization
+- **Performance**: Equal or better performance than standard MCP
+- **Maintainability**: Custom protocol can be updated independently
+- **Future-Proof**: Migration path available when mcp-core bug is fixed
+
+---
+
 ## [0.4.0] - 2025-06-09
 
 > **🚀 NEW FEATURE**: Node.js Real-Time Debugging Integration! Web-based dashboard with live monitoring.

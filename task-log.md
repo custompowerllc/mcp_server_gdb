@@ -134,11 +134,23 @@ curl http://127.0.0.1:3000/health  # Node.js health (WORKING)
 - [x] Session management working
 - [x] JSON-RPC message exchange working
 
-## Remaining Work - UPDATED
+## Remaining Work - DISTRIBUTED TO AGENTS
 - [x] ~~Fix tools/list authorization issue~~ - **IDENTIFIED**: Bug in mcp-core v0.1
 - [x] ~~Test direct tool invocation~~ - **COMPLETED**: Confirmed both tools/list and tools/call fail
-- [ ] **NEW PRIORITY**: Implement workaround for mcp-core bug
-- [ ] Update Node.js client to bypass MCP tools/call
-- [ ] Complete Node.js API integration with workaround
-- [ ] Test WebSocket dashboard functionality
-- [ ] End-to-end debugging workflow test
+- [ ] **AGENT-1**: Implement workaround for mcp-core bug (feature/rust-custom-protocol)
+- [ ] **AGENT-2**: Update Node.js client to bypass MCP tools/call (feature/nodejs-custom-client)
+- [ ] **AGENT-3**: Complete Node.js API integration with workaround (feature/comprehensive-testing)
+- [ ] **AGENT-3**: Test WebSocket dashboard functionality
+- [ ] **AGENT-3**: End-to-end debugging workflow test
+- [ ] **AGENT-4**: Update all documentation (feature/documentation-update) - **MAJOR PROGRESS**
+  - ✅ Updated README.md with critical bug status and workaround progress
+  - ✅ Updated CHANGELOG.md with v0.5.0 development details
+  - ✅ Created docs/api/ directory with comprehensive API documentation
+  - ✅ Created docs/custom-protocol-spec.md with detailed workaround specification
+  - ✅ Created docs/troubleshooting.md with known issues and solutions
+  - ✅ Created docs/installation-guide.md with complete setup instructions
+  - ✅ Created docs/developer-guide.md for contributors
+  - ✅ Created docs/api/tools-reference.md with complete tool documentation
+  - ✅ Updated lessons.md with documentation coordination strategies
+  - 🔄 Monitoring other agents' branches for implementation updates
+- [ ] **AGENT-5**: Enhance CI/CD pipeline (feature/devops-pipeline)

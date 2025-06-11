@@ -204,5 +204,38 @@ npm install eventsource  # Not manual package.json editing
 
 **Implementation**: `nodejs/test-direct-tools.js` script successfully identified the exact failure point.
 
+### 21. Documentation Strategy for Complex Projects
+**Lesson**: Comprehensive documentation is critical during parallel development and crisis response.
+
+**Effective Documentation Approach**:
+1. **Status-First Documentation**: Always lead with current status and critical issues
+2. **Multi-Audience Documentation**: Create docs for users, developers, and contributors
+3. **Living Documentation**: Update docs continuously as development progresses
+4. **Cross-Reference Documentation**: Link related documents for easy navigation
+
+**Implementation**: Created comprehensive documentation structure:
+- Updated README.md with critical bug status and workaround progress
+- Created docs/api/ directory with complete API reference
+- Developed custom-protocol-spec.md for technical specifications
+- Built troubleshooting.md addressing known issues
+- Created installation-guide.md and developer-guide.md for different audiences
+
+### 22. Parallel Development Documentation Coordination
+**Lesson**: When multiple agents work in parallel, documentation must coordinate and track progress.
+
+**Coordination Strategy**:
+- Monitor other development branches for implementation details
+- Update documentation as specifications become available
+- Provide early feedback through documentation review
+- Maintain consistency across all documentation
+
+**Tools Used**:
+- GitHub issues for tracking documentation tasks
+- Branch monitoring for implementation updates
+- Cross-referencing between documentation files
+- Version control for documentation changes
+
 ## Summary
 The main lesson is that MCP transport implementation requires careful attention to protocol details, proper error handling, and incremental testing. **CRITICAL**: Always test the actual MCP protocol implementation, not just the documentation, as library bugs can cause unexpected failures even when the protocol handshake appears successful. The documentation may not always match the actual implementation in specific language SDKs, so always verify against the actual code and test thoroughly.
+
+**Documentation Lesson**: In crisis situations with parallel development, comprehensive and coordinated documentation becomes essential for project success. Documentation should be status-aware, multi-audience focused, and continuously updated to support rapid development cycles.
