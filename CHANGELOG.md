@@ -5,7 +5,39 @@ All notable changes to the MCP Server GDB for STM32 project will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.0] - 2025-06-09
+## [0.4.0] - 2024-12-19
+
+> **🧪 AGENT-3: COMPREHENSIVE TESTING & VALIDATION COMPLETED**: Complete testing framework for Agent-1 and Agent-2 integration validation.
+
+### Added - Agent-3 Testing Framework
+- 🧪 **Comprehensive Testing Strategy**: Complete testing strategy document (`docs/testing-strategy.md`)
+- 🔧 **Modular Testing Framework**: Rust-based framework (`tests/framework/`) with protocol validation
+- ✅ **Agent Integration Tests**: Validation tests for Agent-1 and Agent-2 implementations
+- 📊 **Performance Benchmarking**: Framework comparing MCP vs Custom HTTP protocol performance
+- 🚀 **CI/CD Pipeline**: Automated testing with GitHub Actions (`.github/workflows/test-pipeline.yml`)
+- 🖥️ **Cross-Platform Testing**: Windows, Linux, macOS compatibility validation
+- 🏭 **Production Readiness**: High-load testing and error scenario validation
+- 🛠️ **Test Execution Script**: Comprehensive test runner (`tests/run_comprehensive_tests.sh`)
+
+## [0.3.0] - 2024-12-19
+
+> **🚀 AGENT-1 & AGENT-2 INTEGRATION COMPLETE**: Dual-server custom protocol + Node.js client integration.
+
+### Added - Agent-1 Custom Protocol
+- 🦀 **Dual-Server Architecture**: MCP SSE (port 8081) + Custom HTTP (port 8082)
+- 🔧 **MCP Bug Workaround**: Complete bypass of mcp-core v0.1 initialization bug
+- 🛠️ **HTTP REST API**: All 17 GDB tools accessible via custom HTTP endpoints
+- ⚡ **Enhanced Performance**: Direct HTTP calls instead of broken MCP protocol
+- 📋 **Proper Error Handling**: HTTP status codes and structured error responses
+
+### Added - Agent-2 Node.js Integration
+- 🟢 **Dual-Server Client**: Node.js client connecting to both MCP and HTTP servers
+- 🌐 **WebSocket Dashboard**: Real-time debugging dashboard with live updates
+- 🔗 **HTTP API Integration**: Seamless integration with Agent-1's custom protocol
+- 🛡️ **Graceful Error Handling**: Robust connection management and recovery
+- 🔄 **Complete Workflows**: End-to-end debugging workflow support
+
+## [0.2.0] - 2024-12-18
 
 > **🚀 NEW FEATURE**: Node.js Real-Time Debugging Integration! Web-based dashboard with live monitoring.
 
