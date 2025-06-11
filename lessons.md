@@ -44,165 +44,312 @@ const { EventSource } = require('eventsource');
 
 **Common Mistake**: Sending `initialized` as a request instead of a notification.
 
-### 5. Port Configuration Issues
-**Lesson**: Default ports can conflict with other services.
+### 5. Critical Bug in mcp-core v0.1 ⚠️
+**Problem**: mcp-core v0.1 has a critical initialization state tracking bug
+- ✅ SSE connection works perfectly
+- ✅ MCP initialize handshake successful
+- ✅ MCP initialized notification sent
+- ❌ `tools/list` fails: "Client must be initialized before using tools/list"
+- ❌ `tools/call` fails: "Client must be initialized before using tools/call"
 
-**Solution**:
-- Default MCP server port is 8080, but this often conflicts with other HTTP servers
-- Use environment variables: `$env:SERVER_PORT="8081"`
-- Always verify the server is actually listening on the expected port
+**Root Cause**: mcp-core doesn't properly track client initialization state after handshake
 
-### 6. Error Handling Strategy
-**Lesson**: MCP connection issues should be handled gracefully to allow partial functionality.
+**Solution**: Agent-1's dual-server approach + Node.js client integration provides complete workaround
 
-**Implementation**:
-```javascript
-// Don't fail completely if tools/list fails
-try {
-  tools = await this.sendMCPRequest('tools/list');
-} catch (error) {
-  console.warn('Could not get tools list:', error.message);
-  tools = { tools: [] }; // Continue anyway
-}
-```
+### 6. Agent-1's Dual-Server Solution
+**Architecture**: Brilliant dual protocol strategy
+- **MCP SSE Server** (Port 8081): For handshake and compatibility
+- **Custom HTTP Server** (Port 8082): For actual tool execution
+- **Benefits**: Backward compatibility + complete bug workaround
 
-### 7. Debugging MCP Connections
-**Lesson**: Test MCP connections incrementally with simple scripts.
-
-**Useful Test Pattern**:
-1. Test SSE connection with curl: `curl http://127.0.0.1:8081/sse`
-2. Create simple test script to verify handshake
-3. Test individual components before full integration
-
-### 8. JSON-RPC Message Format
-**Lesson**: MCP uses JSON-RPC 2.0 with specific requirements.
-
-**Request Format**:
-```javascript
-{
-  "jsonrpc": "2.0",
-  "id": 1,              // Required for requests
-  "method": "initialize",
-  "params": { ... }
-}
-```
-
-**Notification Format**:
-```javascript
-{
-  "jsonrpc": "2.0",
-  "method": "initialized",  // No ID for notifications
-  "params": { ... }
-}
-```
-
-### 9. Windows Development Considerations
-**Lesson**: Windows requires specific handling for process management and environment variables.
-
-**PowerShell Environment Variables**:
-```powershell
-$env:SERVER_PORT="8081"
-./target/debug/mcp-server-gdb.exe sse
-```
-
-### 10. Dependency Management
-**Lesson**: Always use package managers for dependency installation.
-
-**Correct Approach**:
-```bash
-npm install eventsource  # Not manual package.json editing
-```
+### 7. Node.js Client Integration with Agent-1
+**Implementation**: Updated Node.js client to work with Agent-1's dual-server approach
+- **HTTP REST Integration**: Uses Agent-1's custom protocol HTTP server
+- **Response Format Handling**: Handles Agent-1's `{ success, data, error }` format
+- **Dual URL Configuration**: Connects to both MCP and Custom Protocol servers
+- **Complete API Coverage**: All 16 tools working via HTTP REST API
 
 ## Architecture Lessons
 
-### 11. Transport Layer Abstraction
-**Lesson**: Abstract transport details from business logic.
+### 8. Dual Protocol Strategy
+**Approach**: Run both MCP and custom HTTP protocols simultaneously
+- **MCP SSE**: For handshake and compatibility
+- **Custom HTTP**: For actual tool execution
+- **Benefits**: Backward compatibility + bug workaround
 
-**Implementation**: Created separate `sendMCPRequest()` and `sendMCPNotification()` methods to handle transport specifics.
+### 9. Tool Invocation Patterns
+**Direct Function Calls**: Bypass mcp-core registration entirely
+```rust
+// Instead of mcp-core tools/call
+match tools::create_session_tool(params).await {
+    Ok(response) => /* handle success */,
+    Err(e) => /* handle error */,
+}
+```
 
-### 12. Connection State Management
-**Lesson**: Track connection state properly and handle reconnections.
+### 10. API Design Principles
+1. **Consistent JSON Structure**: All responses follow same format
+2. **RESTful Endpoints**: `/api/tools/{tool_name}` pattern
+3. **Parameter Validation**: Extract and validate parameters before tool calls
+4. **Error Propagation**: Convert tool errors to HTTP responses
 
-**Key States**:
-- SSE connection established
-- MCP session initialized  
-- Tools available
-- Connection lost/reconnecting
+## Rust Development Lessons
 
-### 13. Error Recovery Patterns
-**Lesson**: Implement graceful degradation when parts of the system fail.
+### 11. HTTP Server Integration with Axum
+**Best Practices**:
+- Use Axum for modern async HTTP servers in Rust
+- Tower middleware provides excellent CORS and tracing support
+- Graceful shutdown requires handling both transport and HTTP server
+- Port allocation: Use SSE port + 1 for custom HTTP server
 
-**Pattern**: Continue operation even if non-critical features (like tools/list) fail, but ensure core functionality works.
+**Code Pattern**:
+```rust
+// HTTP server alongside existing transport
+let http_server_handle = if args.transport == TransportType::Sse {
+    let app = custom_protocol::create_router()
+        .layer(tower_http::cors::CorsLayer::permissive())
+        .layer(tower_http::trace::TraceLayer::new_for_http());
+
+    Some(tokio::spawn(async move {
+        axum::serve(listener, app).await
+    }))
+} else {
+    None
+};
+```
+
+### 12. Error Handling Patterns
+**JSON API Responses**:
+```rust
+#[derive(Debug, Serialize)]
+pub struct ToolResponse {
+    pub success: bool,
+    pub data: Option<Value>,
+    pub error: Option<String>,
+}
+```
+
+**HTTP Status Code Mapping**:
+- `200 OK` - Successful tool execution
+- `400 Bad Request` - Invalid parameters
+- `500 Internal Server Error` - Tool execution error
+
+### 13. Dependency Management
+**HTTP Server Stack**:
+- `axum = "0.7"` - Modern async web framework
+- `tower = "0.4"` - Service abstraction layer
+- `tower-http = "0.5"` - HTTP middleware (CORS, tracing)
+- `hyper = "1.0"` - HTTP implementation
+- `chrono = "0.4"` - Timestamp support
+
+**Compatibility**: Ensure version compatibility across the stack
+
+## Node.js Integration Lessons
+
+### 14. Agent-1 Integration Strategy
+**Implementation**: Updated Node.js client for Agent-1's dual-server approach
+- **Dual URL Configuration**: Connect to both MCP (8081) and Custom Protocol (8082) servers
+- **HTTP REST Integration**: Use Agent-1's HTTP API for all tool operations
+- **Response Format Handling**: Handle Agent-1's response format with helper functions
+- **Health Checks**: Use Agent-1's `/health` endpoint instead of broken `tools/list`
+
+### 15. Custom Protocol Implementation Patterns
+**Node.js Client Updates**:
+```javascript
+// Agent-1 integration pattern
+async sendCustomToolRequest(toolName, params = {}) {
+  const response = await fetch(`${this.customProtocolUrl}/api/tools/${toolName}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ params: params })
+  });
+
+  const result = await response.json();
+  if (!result.success) {
+    throw new Error(result.error || 'Tool execution failed');
+  }
+  return result.data;
+}
+```
+
+### 16. Response Format Handling
+**Challenge**: Handle Agent-1's response format consistently
+```javascript
+// Helper function for Agent-1's response format
+handleCustomProtocolResponse(result, expectJson = false) {
+  if (result && result.message) {
+    if (expectJson) {
+      try {
+        return JSON.parse(result.message);
+      } catch (parseError) {
+        return { data: result.message };
+      }
+    }
+    return result.message;
+  }
+  return result;
+}
+```
 
 ## Testing Lessons
 
-### 14. Incremental Testing Strategy
-**Lesson**: Test each layer of the protocol stack independently.
+### 17. Comprehensive Test Coverage
+**Test Categories**:
+1. **Health Checks**: Server status and availability
+2. **Tool Listing**: Available tools enumeration
+3. **Session Management**: Create, get, list, close sessions
+4. **Debug Control**: Start/stop debugging
+5. **Breakpoint Management**: Set, get, delete breakpoints
+6. **Execution Control**: Continue, step, next
+7. **Information Retrieval**: Stack, variables, registers, memory
 
-**Test Hierarchy**:
-1. Network connectivity (curl)
-2. SSE connection (EventSource)
-3. MCP handshake (initialize/initialized)
-4. Tool invocation
-5. Full application integration
+### 18. Integration Testing Strategy
+**Agent-1 Integration Tests**:
+- **Dual-Server Testing**: Test both MCP and Custom Protocol servers
+- **Node.js Integration**: Test complete Node.js client integration
+- **API Endpoint Testing**: Test all 15 REST endpoints
+- **Error Handling**: Test graceful failure scenarios
 
-### 15. Logging and Debugging
-**Lesson**: Comprehensive logging at each protocol layer is essential.
+### 19. Performance Testing
+**Metrics to Track**:
+- Response time per tool call
+- Success/failure rates
+- Error message quality
+- Server resource usage
 
-**Implementation**: Log SSE events, JSON-RPC messages, and state transitions separately.
+## Documentation Lessons
+
+### 20. API Documentation Structure
+1. **Problem Statement**: Clear description of the issue
+2. **Solution Architecture**: High-level approach
+3. **Implementation Details**: Technical specifics
+4. **API Reference**: Endpoint documentation with examples
+5. **Usage Instructions**: Client integration guides
+6. **Testing Procedures**: Validation steps
+7. **Compatibility Notes**: Backward compatibility information
+
+### 21. Integration Documentation
+**Complete Documentation Suite**:
+- **Agent-1 Integration Guide**: Complete integration instructions
+- **Custom Protocol README**: Technical implementation details
+- **Implementation Summary**: Final project summary
+- **API Reference**: Complete endpoint documentation
+
+## Project Management Lessons
+
+### 22. Branch Strategy
+- **Feature Branches**: Separate branches for Rust and Node.js work
+- **Frequent Commits**: Small, descriptive commits
+- **Regular Pushes**: Keep remote branch updated
+- **PR Process**: Create PR to develop when complete
+
+### 23. Task Tracking
+- **Task Log**: Detailed progress tracking
+- **Lessons Learned**: Document insights for future reference
+- **Status Updates**: Clear completion criteria
+- **Success Metrics**: Measurable validation requirements
 
 ## Future Considerations
 
-### 16. Protocol Version Compatibility
-**Lesson**: MCP protocol versions may have breaking changes.
+### 24. mcp-core Updates
+**When mcp-core fixes the bug**:
+1. Add feature flag to disable custom protocol
+2. Implement fallback to standard MCP tools/call
+3. Provide gradual migration path
+4. Maintain backward compatibility
 
-**Recommendation**: Always specify and validate protocol versions in handshake.
+### 25. Protocol Extensions
+**Potential Enhancements**:
+- Authentication and authorization
+- Rate limiting and throttling
+- Metrics and monitoring endpoints
+- WebSocket support for real-time updates
+- Batch tool execution
 
-### 17. Transport Migration Path
-**Lesson**: Be prepared for transport protocol changes.
+### 26. Performance Optimizations
+- Connection pooling for GDB sessions
+- Caching for frequently accessed data
+- Async tool execution with progress tracking
+- Resource usage monitoring
 
-**Strategy**: Keep transport logic isolated so it can be swapped out when Streamable HTTP becomes available in Rust crates.
+## Key Takeaways
 
-### 18. Performance Considerations
-**Lesson**: SSE connections are persistent and need proper cleanup.
+1. **Collaboration Works**: Agent-1's Rust implementation + Node.js integration = complete solution
+2. **Dual Protocol Strategy**: Maintain compatibility while fixing critical issues
+3. **Direct Tool Access**: Bypassing framework layers can improve performance
+4. **Comprehensive Testing**: Test all tools and edge cases thoroughly
+5. **Clear Documentation**: Document workarounds and migration paths
+6. **Graceful Degradation**: Ensure fallback options for different scenarios
+7. **Integration Focus**: End-to-end integration provides better user experience
 
-**Implementation**: Always close EventSource connections and handle connection lifecycle properly.
+## Avoid These Mistakes
 
-### 19. MCP Core Library Bug - Critical Discovery
-**Lesson**: `mcp-core` crate version 0.1 has a critical bug in client initialization state tracking.
+1. **Don't Modify Package Files Manually**: Use package managers for dependencies
+2. **Don't Ignore Compilation Warnings**: Address unused imports and variables
+3. **Don't Skip Error Handling**: Implement comprehensive error responses
+4. **Don't Forget Graceful Shutdown**: Handle cleanup for all services
+5. **Don't Skip Documentation**: Document workarounds and architectural decisions
+6. **Don't Work in Isolation**: Coordinate between Rust and Node.js implementations
 
-**Bug Details**:
-- SSE connection works perfectly
-- MCP initialize handshake succeeds and returns proper capabilities
-- MCP initialized notification is sent and accepted
-- **BUG**: Server doesn't track client initialization state properly
-- Both `tools/list` and `tools/call` fail with "Client must be initialized" error
+## Success Patterns
 
-**Evidence**:
-```
-✅ MCP Initialize successful (returns server capabilities)
-✅ Initialized notification sent successfully
-❌ tools/list fails: "Client must be initialized before using tools/list"
-❌ tools/call fails: "Client must be initialized before using tools/call"
-```
-
-**Workaround Strategy**:
-- Bypass MCP standard tools/call protocol
-- Implement custom direct tool invocation
-- Use SSE connection for custom protocol
-
-### 20. Testing Strategy for MCP Issues
-**Lesson**: Create comprehensive test scripts to isolate protocol issues.
-
-**Effective Test Pattern**:
-1. Test SSE connection establishment
-2. Test MCP initialize handshake
-3. Test initialized notification
-4. Test tools/list (expected to work)
-5. Test tools/call (expected to work)
-6. If steps 4-5 fail, implement workaround
-
-**Implementation**: `nodejs/test-direct-tools.js` script successfully identified the exact failure point.
+1. **Incremental Implementation**: Build and test each component separately
+2. **Preserve Existing Functionality**: Don't break working features
+3. **Comprehensive Testing**: Test all tools and scenarios
+4. **Clear Communication**: Document problems and solutions clearly
+5. **Future-Proof Design**: Plan for eventual migration back to standard protocols
+6. **End-to-End Integration**: Focus on complete user experience
+7. **Collaborative Development**: Coordinate between different technology stacks
 
 ## Summary
-The main lesson is that MCP transport implementation requires careful attention to protocol details, proper error handling, and incremental testing. **CRITICAL**: Always test the actual MCP protocol implementation, not just the documentation, as library bugs can cause unexpected failures even when the protocol handshake appears successful. The documentation may not always match the actual implementation in specific language SDKs, so always verify against the actual code and test thoroughly.
+
+The main lesson is that complex protocol issues require collaborative solutions. Agent-1's dual-server Rust implementation combined with the updated Node.js client provides a robust workaround for the mcp-core v0.1 bug while maintaining full functionality and providing better performance than the original MCP protocol.
+
+**When Standard Protocols Fail**: Implement collaborative workarounds that leverage the strengths of different technology stacks. The combination of Agent-1's Rust server and the Node.js client integration demonstrates how effective teamwork can overcome critical library bugs and deliver production-ready solutions.
+
+## Quality Bug Fixes (v0.5.1)
+
+### 27. Process Termination Issues
+**Problem**: Test scripts hanging without proper exit codes, causing CI/CD pipeline issues.
+**Solution**: Added `process.exit(0)` on success and `process.exit(1)` on error.
+**Lesson**: Always ensure test scripts terminate properly with appropriate exit codes for automation compatibility.
+
+### 28. Dependency Management
+**Problem**: Unused `axios` dependency increasing bundle size and maintenance overhead.
+**Solution**: Removed unused dependency while keeping actively used `node-fetch`.
+**Lesson**: Regularly audit dependencies and remove unused packages to maintain clean codebases.
+
+### 29. Import Consistency
+**Problem**: Inconsistent EventSource import patterns causing potential runtime errors.
+**Solution**: Standardized to non-destructuring import: `const EventSource = require('eventsource')`.
+**Lesson**: Maintain consistent import patterns across the codebase to prevent confusion and errors.
+
+### 30. Missing Method Implementation
+**Problem**: Constructor calling undefined `setupMCPClient()` method causing immediate runtime failure.
+**Solution**: Removed the undefined method call from MCPBridge constructor.
+**Lesson**: Ensure all method calls in constructors reference implemented methods or handle gracefully.
+
+### 31. HTTP Status Code Validation
+**Problem**: Request handlers not checking HTTP status codes, masking server errors.
+**Solution**: Added status code validation to reject promises on non-2xx responses.
+**Lesson**: Always validate HTTP status codes to surface server-side failures immediately.
+
+### 32. Test Reliability
+**Problem**: Tests against long-lived SSE streams timing out and causing false failures.
+**Solution**: Replaced `/sse` endpoint tests with lightweight `/health` endpoint tests.
+**Lesson**: Use appropriate endpoints for testing - health checks for availability, not streaming endpoints.
+
+### 33. Parse Safety
+**Problem**: `parseInt()` without radix parameter causing incorrect parsing of values starting with "0".
+**Solution**: Added radix parameter `10` to all `parseInt()` calls for consistent decimal parsing.
+**Lesson**: Always specify radix parameter in `parseInt()` to prevent unexpected octal/hex parsing.
+
+### 34. Configuration Accuracy
+**Problem**: Default port configuration not matching documentation and other config files.
+**Solution**: Updated PowerShell script default port from 8080 to 8081.
+**Lesson**: Ensure all configuration defaults are consistent across documentation and implementation.
+
+### 35. Code Quality - DRY Principle
+**Problem**: Repeated response parsing logic violating DRY principles and increasing maintenance burden.
+**Solution**: Extracted parsing logic into reusable helper methods `parseToolResponse()` and `parseToolResponseAsText()`.
+**Lesson**: Identify and refactor repeated code patterns into reusable helper functions to improve maintainability.
