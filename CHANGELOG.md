@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🔧 **Modular Testing Framework**: Rust-based framework (`tests/framework/`) with protocol validation
 - ✅ **Agent Integration Tests**: Validation tests for Agent-1 and Agent-2 implementations
 - 📊 **Performance Benchmarking**: Framework comparing MCP vs Custom HTTP protocol performance
-- 🚀 **CI/CD Pipeline**: Automated testing with GitHub Actions (`.github/workflows/test-pipeline.yml`)
+- 🚀 **CI/CD Pipeline**: Automated testing pipeline framework
 - 🖥️ **Cross-Platform Testing**: Windows, Linux, macOS compatibility validation
 - 🏭 **Production Readiness**: High-load testing and error scenario validation
 - 🛠️ **Test Execution Script**: Comprehensive test runner (`tests/run_comprehensive_tests.sh`)
@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `tests/framework/integration/mod.rs` - Node.js client integration tests
 - `tests/framework/performance/mod.rs` - Performance benchmarking framework
 - `tests/validation/agent_integration_tests.rs` - Agent validation tests
-- `.github/workflows/test-pipeline.yml` - Automated CI/CD pipeline
+- CI/CD pipeline framework (workflow file available separately)
 - `tests/run_comprehensive_tests.sh` - Test execution script
 - `docs/testing-strategy.md` - Comprehensive testing strategy
 - `README_AGENT3_TESTING.md` - Complete testing framework documentation

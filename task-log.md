@@ -226,7 +226,7 @@ tests/framework/
 - 🧪 **tests/framework/**: Modular testing framework
 - 🔗 **tests/validation/agent_integration_tests.rs**: Agent validation tests
 - 📊 **tests/framework/performance/**: Performance benchmarking suite
-- 🚀 **.github/workflows/test-pipeline.yml**: Automated CI/CD pipeline
+- 🚀 **CI/CD Pipeline**: Automated testing pipeline (workflow file available separately)
 - 🛠️ **tests/run_comprehensive_tests.sh**: Test execution script
 
 ### Agent-3 PR Successfully Merged ✅
