@@ -1,0 +1,45 @@
+{
+  "name": "mcp-gdb-orchestrator",
+  "version": "1.0.0",
+  "description": "AI Remote Agent Task Orchestrator for MCP Server GDB project",
+  "main": "orchestrator.js",
+  "scripts": {
+    "start": "node orchestrator.js",
+    "assign": "node orchestrator.js --action assign",
+    "manage-prs": "node orchestrator.js --action prs",
+    "update-log": "node orchestrator.js --action log",
+    "setup": "node setup-orchestrator.js",
+    "test": "node test-orchestrator.js",
+    "validate": "node validate-tasks.js"
+  },
+  "keywords": [
+    "orchestrator",
+    "ai-agents",
+    "task-management",
+    "github-automation",
+    "mcp",
+    "gdb",
+    "project-management"
+  ],
+  "author": "Custom Power LLC",
+  "license": "MIT",
+  "dependencies": {
+    "@octokit/rest": "^20.0.2",
+    "js-yaml": "^4.1.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/custompowerllc/mcp_server_gdb.git"
+  },
+  "bugs": {
+    "url": "https://github.com/custompowerllc/mcp_server_gdb/issues"
+  },
+  "homepage": "https://github.com/custompowerllc/mcp_server_gdb#readme"
+}
